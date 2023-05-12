@@ -28,39 +28,45 @@ function addDepartment(input) {
   );
 }
 
-function addRole() {
-  db.query("SELECT * FROM DEPARTMENT;", function (err, results) {
-    if (err) {
-      console.log(err);
-    }
-  });
-  prompt.roleQuestions = [
-    {
-      type: "input",
-      name: "title",
-      message: "What would you like to call the new role?",
-    },
-    {
-      type: "input",
-      name: "salary",
-      message: "What is the salary of the new role?",
-    },
-    {
-      type: "list",
-      name: "department",
-      message: "Select the department the new role belongs in",
-      choices: [results],
-    },
-  ];
-  const newRole = {
-    title: input.title,
-    salary: input.salary,
-    department_id: input.department,
-  };
-  db.query("INSERT INTO role SET ?", newRole, (error, result) => {
-    if (error) throw error;
-    console.log(`${newRole.title} was added.`);
-  });
+async function addRole() {
+    //this could be a seperate function written elsewhere and called here.
+  await db
+    .promise()
+    .query("SELECT * FROM DEPARTMENT;")
+    .then(([results]) => {
+      const departments = results.map(({ id, name }) => ({
+        name: name,
+        value: id,
+      }));
+      prompt([
+        {
+          type: "input",
+          name: "title",
+          message: "What would you like to call the new role?",
+        },
+        {
+          type: "input",
+          name: "salary",
+          message: "What is the salary of the new role?",
+        },
+        {
+          type: "list",
+          name: "department",
+          message: "Select the department the new role belongs in",
+          choices: departments,
+        },
+      ]).then((input) => {
+        const newRole = {
+          title: input.title,
+          salary: input.salary,
+          department_id: input.department,
+        };
+        db.query("INSERT INTO role SET ?", newRole, (error) => {
+          if (error) throw error;
+          console.log(`${newRole.title} was added.`);
+        });
+      });
+    });
 }
 
 module.exports = { addDepartment, depQuestions, addRole };
